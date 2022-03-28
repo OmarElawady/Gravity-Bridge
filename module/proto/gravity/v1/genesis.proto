@@ -151,7 +151,8 @@ message GenesisState {
   repeated Attestation               attestations        = 9 [(gogoproto.nullable) = false];
   repeated MsgSetOrchestratorAddress delegate_keys       = 10 [(gogoproto.nullable) = false];
   repeated ERC20ToDenom              erc20_to_denoms     = 11 [(gogoproto.nullable) = false];
-  repeated OutgoingTransferTx        unbatched_transfers = 12 [(gogoproto.nullable) = false];
+  repeated ERC20ToDenom              eth_erc20_to_denoms = 12 [(gogoproto.nullable) = false];
+  repeated OutgoingTransferTx        unbatched_transfers = 13 [(gogoproto.nullable) = false];
 }
 
 // GravityCounters contains the many noces and counters required to maintain the bridge state in the genesis

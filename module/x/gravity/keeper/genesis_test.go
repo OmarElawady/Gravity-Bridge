@@ -68,7 +68,7 @@ func TestBatchAndTxImportExport(t *testing.T) {
 	for i, v := range contracts {
 		token, err := types.NewInternalERC20Token(sdk.NewInt(99999999), v.GetAddress())
 		tokens[i] = token
-		allVouchers := sdk.NewCoins(token.GravityCoin())
+		allVouchers := sdk.NewCoins(token.GravityCoin(""))
 		vouchers[i] = &allVouchers
 		require.NoError(t, err)
 
@@ -103,7 +103,7 @@ func TestBatchAndTxImportExport(t *testing.T) {
 		require.NoError(t, err)
 
 		// add transaction to the pool
-		id, err := input.GravityKeeper.AddToOutgoingPool(ctx, *sender, *receiver, amountToken.GravityCoin(), feeToken.GravityCoin())
+		id, err := input.GravityKeeper.AddToOutgoingPool(ctx, *sender, *receiver, amountToken.GravityCoin(""), feeToken.GravityCoin(""))
 		require.NoError(t, err)
 		ctx.Logger().Info(fmt.Sprintf("Created transaction %v with amount %v and fee %v of contract %v from %v to %v", i, amount, fee, contract, sender, receiver))
 

@@ -1,6 +1,7 @@
 //! contains configuration structs that need to be accessed across crates.
 
 use clarity::{Address as EthAddress, Uint256};
+use std::collections::HashMap;
 
 /// Global configuration struct for Gravity bridge tools
 #[derive(Serialize, Deserialize, Debug, PartialEq, Default, Clone)]
@@ -41,6 +42,10 @@ pub struct RelayerConfig {
     /// the speed at which the relayer loop runs, in seconds
     /// higher values reduce the chances of money lost to a collision
     pub relayer_loop_speed: u64,
+    pub weth_contract_address: EthAddress,
+    /// A contract implementing Router02 uniswap v2 interface
+    pub router_contract_address: EthAddress,
+    pub paths: HashMap<EthAddress, Vec<EthAddress>>,
 }
 
 /// Relayer configuration that's is more easily parsable with toml
@@ -56,18 +61,41 @@ pub struct TomlRelayerConfig {
     pub logic_call_market_enabled: bool,
     #[serde(default = "default_relayer_loop_speed")]
     pub relayer_loop_speed: u64,
+    #[serde(default = "default_weth_contract_address")]
+    pub weth_contract_address: String,
+    #[serde(default = "default_router_contract_address")]
+    pub router_contract_address: String,
+    #[serde(default = "default_token_paths")]
+    pub paths: Vec<TokenPath>,
 }
 
 impl From<TomlRelayerConfig> for RelayerConfig {
     fn from(input: TomlRelayerConfig) -> Self {
+        let mut paths = HashMap::new();
+        for v in input.paths.iter() {
+            let mut addresses  = vec![];
+            for token in v.path.iter() {
+                addresses.push(EthAddress::parse_and_validate(token).unwrap());
+            }
+            paths.insert(EthAddress::parse_and_validate(&v.path[0]).unwrap(), addresses);
+        }
         RelayerConfig {
             valset_relaying_mode: input.valset_relaying_mode.into(),
             batch_relaying_mode: input.batch_relaying_mode.into(),
             batch_request_mode: input.batch_request_mode,
             logic_call_market_enabled: input.logic_call_market_enabled,
             relayer_loop_speed: input.relayer_loop_speed,
+            weth_contract_address: EthAddress::parse_and_validate(&input.weth_contract_address).unwrap(),
+            router_contract_address: EthAddress::parse_and_validate(&input.router_contract_address).unwrap(),
+            paths: paths,
         }
     }
+}
+
+/// A path in pancakeswap Router02 to convert from the first token in it to the last token
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+pub struct TokenPath {
+    pub path: Vec<String>
 }
 
 /// The various possible modes for relaying validator set updates
@@ -202,7 +230,19 @@ fn default_batch_request_mode() -> BatchRequestMode {
 }
 
 fn default_relayer_loop_speed() -> u64 {
-    600
+    10
+}
+
+fn default_weth_contract_address() -> String {
+    "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd".into()
+}
+
+fn default_router_contract_address() -> String {
+    "0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3".into()
+}
+
+fn default_token_paths() -> Vec<TokenPath> {
+    vec![]
 }
 
 impl Default for RelayerConfig {
@@ -213,6 +253,9 @@ impl Default for RelayerConfig {
             batch_relaying_mode: default_batch_relaying_mode().into(),
             logic_call_market_enabled: default_logic_call_market_enabled(),
             relayer_loop_speed: default_relayer_loop_speed(),
+            weth_contract_address: EthAddress::parse_and_validate(&default_weth_contract_address()).unwrap(),
+            router_contract_address: EthAddress::parse_and_validate(&default_router_contract_address()).unwrap(),
+            paths: HashMap::new(),
         }
     }
 }
@@ -225,6 +268,9 @@ impl Default for TomlRelayerConfig {
             batch_relaying_mode: default_batch_relaying_mode(),
             logic_call_market_enabled: default_logic_call_market_enabled(),
             relayer_loop_speed: default_relayer_loop_speed(),
+            weth_contract_address: default_weth_contract_address(),
+            router_contract_address: default_router_contract_address(),
+            paths: default_token_paths(),
         }
     }
 }

@@ -129,9 +129,9 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 	if oldTx != nil || oldTxErr == nil {
 		return sdkerrors.Wrapf(types.ErrInvalid, "tx with id %d was not fully removed from the pool, a duplicate must exist", txId)
 	}
-
+	_, denom := k.ERC20ToDenomLookup(ctx, tx.Erc20Fee.Contract)
 	// Calculate refund
-	totalToRefund := tx.Erc20Token.GravityCoin()
+	totalToRefund := tx.Erc20Token.GravityCoin(denom)
 	totalToRefund.Amount = totalToRefund.Amount.Add(tx.Erc20Fee.Amount)
 	totalToRefundCoins := sdk.NewCoins(totalToRefund)
 

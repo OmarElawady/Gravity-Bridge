@@ -3,6 +3,7 @@
 //! By having batches requested by relayers instead of created automatically the chain can outsource
 //! the significant work of checking if a batch is profitable before creating it
 
+use std::collections::HashMap;
 use clarity::Address as EthAddress;
 use clarity::Uint256;
 use cosmos_gravity::query::get_erc20_to_denom;
@@ -23,6 +24,9 @@ pub async fn request_batches(
     eth_address: EthAddress,
     private_key: PrivateKey,
     request_fee: Coin,
+    paths: &HashMap<EthAddress, Vec<EthAddress>>,
+    weth_contract_address: EthAddress,
+    router_contract_address: EthAddress,
 ) {
     // this actually works either way but sending a tx with zero as the fee
     // value seems strange
@@ -67,8 +71,10 @@ pub async fn request_batches(
         match batch_request_mode {
             BatchRequestMode::ProfitableOnly => {
                 let weth_cost_estimate = eth_gas_price.clone() * BATCH_GAS.into();
-                match get_weth_price(token, total_fee, eth_address, web30).await {
+                match get_weth_price(token, total_fee.clone(), eth_address, web30, paths, weth_contract_address, router_contract_address).await {
                     Ok(price) => {
+                        debug!("weth_cost_estimate: {}, total_fee: {}, token: {}, fee_weth_price: {}", weth_cost_estimate, total_fee, eth_address, price);
+                        // info!("weth price for {} {} {}, weth_cost_estimate: {}", total_fee, token, price, weth_cost_estimate);
                         if price > weth_cost_estimate {
                             let res = send_request_batch(
                                 private_key,

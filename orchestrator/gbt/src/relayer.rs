@@ -11,7 +11,7 @@ use gravity_utils::connection_prep::{
 };
 use gravity_utils::types::BatchRequestMode;
 use gravity_utils::types::RelayerConfig;
-use relayer::main_loop::relayer_main_loop;
+use relayer::main_loop::{ relayer_main_loop };
 use relayer::main_loop::TIMEOUT;
 use std::path::Path;
 use std::process::exit;

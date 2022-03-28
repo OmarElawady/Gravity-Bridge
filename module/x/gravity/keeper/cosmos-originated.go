@@ -48,20 +48,23 @@ func (k Keeper) setCosmosOriginatedDenomToERC20(ctx sdk.Context, denom string, t
 func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, denom string) (bool, *types.EthAddress, error) {
 	// First try parsing the ERC20 out of the denom
 	tc1, err := types.GravityDenomToERC20(denom)
-
-	if err != nil {
-		// Look up ERC20 contract in index and error if it's not in there.
-		tc2, exists := k.GetCosmosOriginatedERC20(ctx, denom)
-		if !exists {
-			return false, nil,
-				sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("denom not a gravity voucher coin: %s, and also not in cosmos-originated ERC20 index", err))
-		}
+	if err == nil {
+		return false, tc1, nil
+	}
+	// Look up cosmos-originated ERC20 contract in index
+	tc2, exists := k.GetCosmosOriginatedERC20(ctx, denom)
+	if exists {
 		// This is a cosmos-originated asset
 		return true, tc2, nil
 	}
-
-	// This is an ethereum-originated asset
-	return false, tc1, nil
+	// Look up eth-originated ERC20 contract in index and error if it's not in there.
+	tc3, exists := k.GetEthOriginatedERC20(ctx, denom)
+	if exists {
+		// This is a eth-originated asset
+		return false, tc3, nil
+	}
+	return false, nil,
+		sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("denom not a gravity voucher coin: %s, and also neither in cosmos-originated nor eth-originated ERC20 index", err))
 }
 
 // RewardToERC20Lookup is a specialized function wrapping DenomToERC20Lookup designed to validate
@@ -89,11 +92,18 @@ func (k Keeper) RewardToERC20Lookup(ctx sdk.Context, coin sdk.Coin) (*types.EthA
 // Using this information, you can see if an ERC20 address representing an asset is native to Cosmos or Ethereum,
 // and get its corresponding denom
 func (k Keeper) ERC20ToDenomLookup(ctx sdk.Context, tokenContract types.EthAddress) (bool, string) {
-	// First try looking up tokenContract in index
+	// First try looking up tokenContract in cosmos index
 	dn1, exists := k.GetCosmosOriginatedDenom(ctx, tokenContract)
 	if exists {
 		// It is a cosmos originated asset
 		return true, dn1
+	}
+
+	// First try looking up tokenContract in eth index
+	dn2, exists := k.GetEthOriginatedDenom(ctx, tokenContract)
+	if exists {
+		// It is an eth originated asset
+		return false, dn2
 	}
 
 	// If it is not in there, it is not a cosmos originated token, turn the ERC20 into a gravity denom

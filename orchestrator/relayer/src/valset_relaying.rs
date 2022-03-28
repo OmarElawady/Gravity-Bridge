@@ -1,5 +1,6 @@
 //! This module contains code for the validator update lifecycle. Functioning as a way for this validator to observe
 //! the state of both chains and perform the required operations.
+use std::collections::HashMap;
 use std::time::Duration;
 
 use clarity::address::Address as EthAddress;
@@ -138,6 +139,9 @@ async fn relay_valid_valset(
         cost,
         web3,
         &config.valset_relaying_mode,
+        &config.paths,
+        config.weth_contract_address,
+        config.router_contract_address
     )
     .await;
 
@@ -227,13 +231,16 @@ async fn should_relay_valset(
     cost: GasCost,
     web3: &Web3,
     config: &ValsetRelayingMode,
+    paths: &HashMap<EthAddress, Vec<EthAddress>>,
+    weth_contract_address: EthAddress,
+    router_contract_address: EthAddress,
 ) -> bool {
     match config {
         // if the user has configured only profitable relaying then it is our only consideration
         ValsetRelayingMode::ProfitableOnly { margin } => match valset.reward_token {
             Some(reward_token) => {
                 let price =
-                    get_weth_price(reward_token, valset.reward_amount.clone(), pubkey, web3).await;
+                    get_weth_price(reward_token, valset.reward_amount.clone(), pubkey, web3, paths, weth_contract_address, router_contract_address).await;
                 let cost_with_margin = get_cost_with_margin(cost.get_total(), *margin);
                 // we need to see how much WETH we can get for the reward token amount,
                 // and compare that value to the gas cost times the margin
