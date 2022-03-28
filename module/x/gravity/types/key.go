@@ -101,6 +101,12 @@ var (
 	// ERC20ToDenomKey prefixes the index of Cosmos originated assets ERC20s to denoms
 	ERC20ToDenomKey = "ERC20ToDenomKey"
 
+	// DenomToERC20Key prefixes the index of Cosmos originated asset denoms to ERC20s
+	EthDenomToERC20Key = "EthDenomToERC20Key"
+
+	// EthERC20ToDenomKey prefixes the index of Cosmos originated assets ERC20s to denoms
+	EthERC20ToDenomKey = "EthERC20ToDenomKey"
+
 	// LastSlashedValsetNonce indexes the latest slashed valset nonce
 	LastSlashedValsetNonce = "LastSlashedValsetNonce"
 
@@ -281,6 +287,14 @@ func GetDenomToERC20Key(denom string) string {
 
 func GetERC20ToDenomKey(erc20 EthAddress) string {
 	return ERC20ToDenomKey + erc20.GetAddress()
+}
+
+func GetEthDenomToERC20Key(denom string) string {
+	return EthDenomToERC20Key + denom
+}
+
+func GetEthERC20ToDenomKey(erc20 EthAddress) string {
+	return EthERC20ToDenomKey + erc20.GetAddress()
 }
 
 func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) string {

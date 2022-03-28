@@ -609,7 +609,7 @@ func MakeTestMarshaler() codec.Codec {
 
 // MintVouchersFromAir creates new gravity vouchers given erc20tokens
 func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAddress, amount types.InternalERC20Token) sdk.Coin {
-	coin := amount.GravityCoin()
+	coin := amount.GravityCoin("")
 	vouchers := sdk.Coins{coin}
 	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers)
 	require.NoError(t, err)

@@ -126,6 +126,9 @@ async fn should_relay_batch(
     cost: Uint256,
     pubkey: EthAddress,
     config: &BatchRelayingMode,
+    paths: &HashMap<EthAddress, Vec<EthAddress>>,
+    weth_contract_address: EthAddress,
+    router_contract_address: EthAddress,
 ) -> bool {
     // skip price request below in the trivial case, couldn't really
     // figure the code duplication / extra network IO balance otherwise
@@ -135,7 +138,7 @@ async fn should_relay_batch(
 
     let batch_reward_amount = batch.total_fee.amount.clone();
     let batch_reward_token = batch.total_fee.token_contract_address;
-    let price = get_weth_price(batch_reward_token, batch_reward_amount, pubkey, web3).await;
+    let price = get_weth_price(batch_reward_token, batch_reward_amount, pubkey, web3, paths, weth_contract_address, router_contract_address).await;
 
     match config {
         BatchRelayingMode::EveryBatch => true,
@@ -285,7 +288,7 @@ async fn submit_batches(
                     print_eth(cost.get_total())
                 );
                 oldest_signed_batch
-                    .display_with_eth_info(our_ethereum_address, web3)
+                    .display_with_eth_info(our_ethereum_address, web3, &config.paths, config.weth_contract_address, config.router_contract_address)
                     .await;
 
                 let should_relay = should_relay_batch(
@@ -294,6 +297,9 @@ async fn submit_batches(
                     cost.get_total(),
                     our_ethereum_address,
                     &config.batch_relaying_mode,
+                    &config.paths,
+                    config.weth_contract_address,
+                    config.router_contract_address
                 )
                 .await;
 

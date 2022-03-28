@@ -86,6 +86,9 @@ pub async fn relayer_main_loop(
                 ethereum_key.to_address(),
                 cosmos_key,
                 cosmos_fee,
+                &relayer_config.paths,
+                relayer_config.weth_contract_address,
+                relayer_config.router_contract_address
             )
             .await
         }

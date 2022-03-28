@@ -131,6 +131,7 @@ func DefaultGenesisState() *GenesisState {
 		Attestations:       []Attestation{},
 		DelegateKeys:       []MsgSetOrchestratorAddress{},
 		Erc20ToDenoms:      []ERC20ToDenom{},
+		EthErc20ToDenoms:   []ERC20ToDenom{},
 		UnbatchedTransfers: []OutgoingTransferTx{},
 	}
 }

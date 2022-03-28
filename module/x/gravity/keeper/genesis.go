@@ -158,6 +158,15 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		k.setCosmosOriginatedDenomToERC20(ctx, item.Denom, *ethAddr)
 	}
 
+	// populate state with eth originated denom-erc20 mapping
+	for i, item := range data.EthErc20ToDenoms {
+		ethAddr, err := types.NewEthAddress(item.Erc20)
+		if err != nil {
+			panic(fmt.Errorf("invalid erc20 address in EthErc20ToDenoms for item %d: %s", i, item.Erc20))
+		}
+		k.setEthOriginatedDenomToERC20(ctx, item.Denom, *ethAddr)
+	}
+
 	// now that we have the denom-erc20 mapping we need to validate
 	// that the valset reward is possible and cosmos originated remove
 	// this if you want a non-cosmos originated reward
@@ -198,6 +207,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		attestations       = []types.Attestation{}
 		delegates          = k.GetDelegateKeys(ctx)
 		erc20ToDenoms      = []types.ERC20ToDenom{}
+		ethErc20ToDenoms   = []types.ERC20ToDenom{}
 		unbatchedTransfers = k.GetUnbatchedTransactions(ctx)
 	)
 
@@ -235,6 +245,12 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		return false
 	})
 
+	// export erc20 to denom relations
+	k.IterateEthERC20ToDenom(ctx, func(key []byte, erc20ToDenom *types.ERC20ToDenom) bool {
+		ethErc20ToDenoms = append(ethErc20ToDenoms, *erc20ToDenom)
+		return false
+	})
+
 	unbatchedTxs := make([]types.OutgoingTransferTx, len(unbatchedTransfers))
 	for i, v := range unbatchedTransfers {
 		unbatchedTxs[i] = v.ToExternal()
@@ -260,6 +276,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		Attestations:       attestations,
 		DelegateKeys:       delegates,
 		Erc20ToDenoms:      erc20ToDenoms,
+		EthErc20ToDenoms:   ethErc20ToDenoms,
 		UnbatchedTransfers: unbatchedTxs,
 	}
 }
